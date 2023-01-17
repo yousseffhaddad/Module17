@@ -1,0 +1,90 @@
+--Vine Review Analysis
+
+--imported vine table.csv 
+--verify table 
+SELECT * FROM vine_table;
+
+--confirm the number of rows for all reviews
+SELECT COUNT (*) as "AllReviews"
+FROM vine_table;
+
+--Create table for Total Votes over 20
+CREATE TABLE Total_Votes_20_table AS
+	SELECT * 
+	FROM vine_table 
+	WHERE Total_Votes >= 20;
+
+--verify table for Total Votes over 20
+SELECT * FROM total_votes_20_table;
+
+SELECT COUNT (*) as "Over20"
+FROM total_votes_20_table
+WHERE (total_votes)>=20;
+
+--Create new table for Helpful_Votes
+CREATE TABLE helpful_votes_table AS
+	SELECT *
+	FROM total_votes_20_table
+	WHERE CAST(helpful_votes AS FLOAT)/CAST(total_votes AS FLOAT)>=0.50;
+	
+--verify table for Helpful_Votes
+SELECT * FROM helpful_votes_table;
+
+--confirm count for helpful votes over total votes
+
+SELECT COUNT (*) as "helpful"
+FROM helpful_votes_table
+WHERE (total_votes)>=20
+AND (CAST (helpful_votes AS float))/(CAST(total_votes AS float)) >=0.50;
+
+--Create new table for reviews in the paid Vine Program
+CREATE TABLE paid_vine_reviews AS
+	SELECT *
+	FROM helpful_votes_table
+	WHERE vine = 'Y';
+
+-- Verify table 
+SELECT * FROM paid_vine_reviews;
+
+-- Confirm count for paid vine reviews
+SELECT COUNT (*) AS "paid vine reviews"
+FROM paid_vine_reviews;
+
+--Create new table for reviews in the unpaid Vine Program
+CREATE TABLE unpaid_vine_reviews AS
+	SELECT *
+	FROM helpful_votes_table
+	WHERE vine = 'N';
+
+--Verify table for unpaid vine reviews
+SELECT * FROM unpaid_vine_reviews;
+
+--Confirm the count for unpaid vine reviews
+SELECT COUNT (*) AS "unpaid vine reviews"
+FROM unpaid_vine_reviews;
+
+--Confirm the number of 5 star reviews for paid vine reviews
+SELECT COUNT (*) AS "5-star paid reviews"
+FROM paid_vine_reviews
+WHERE star_rating=5;
+
+--Confirm the number of 5 star reviews for unpaid vine reviews
+SELECT COUNT (*) AS "5-star unpaid reviews"
+FROM unpaid_vine_reviews
+WHERE star_rating=5;
+
+--Convert to percentage
+SELECT COUNT (*) AS "5-star Reviews",
+CASE 
+	WHEN vine='Y' THEN (SELECT COUNT (*) FROM helpful_votes_table WHERE vine='Y')
+	WHEN vine='N' THEN (SELECT COUNT (*) FROM helpful_votes_table WHERE vine='N')
+END AS "Total Reviews",
+CAST(CAST(COUNT(review_id) AS FLOAT)/CAST(CASE 
+	WHEN vine='Y' THEN (SELECT COUNT (*) FROM helpful_votes_table WHERE vine='Y')
+	WHEN vine='N' THEN (SELECT COUNT (*) FROM helpful_votes_table WHERE vine='N')
+END AS FLOAT) AS DEC(2,2)) AS "Percentage"
+FROM helpful_votes_table
+WHERE star_rating=5
+GROUP BY vine
+ORDER BY vine DESC;
+
